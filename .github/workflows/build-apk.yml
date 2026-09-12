@@ -44,15 +44,15 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/LAPIS-Reader-v1.0-debug.apk
-          sha256sum dist/LAPIS-Reader-v1.0-debug.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/LAPIS-Reader-v1.1-debug.apk
+          sha256sum dist/LAPIS-Reader-v1.1-debug.apk > dist/SHA256SUMS.txt
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LAPIS-Reader-Android-APK
+          name: LAPIS-Reader-Android-APK-v1.1
           path: |
-            dist/LAPIS-Reader-v1.0-debug.apk
+            dist/LAPIS-Reader-v1.1-debug.apk
             dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
