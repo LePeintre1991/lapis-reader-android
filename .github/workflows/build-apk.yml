@@ -37,6 +37,41 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      - name: Apply v1.4 tap behavior
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/src/main/assets/reader_template.html')
+          s = p.read_text(encoding='utf-8')
+          replacements = [
+              ("function reveal(){if(finished||back)return;back=true;render();play()}",
+               "function reveal(){if(finished||back)return;back=true;render()}"),
+              ("if(!back)reveal();else toast('请选择 Again / Hard / Easy')",
+               "if(!back)reveal();else play()"),
+              ("评分后自动下一张", "轻点卡背播放读音 · 评分后下一张"),
+          ]
+          for old, new in replacements:
+              if old not in s:
+                  raise SystemExit(f'Expected v1.3 template fragment not found: {old}')
+              s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          g = Path('app/build.gradle')
+          t = g.read_text(encoding='utf-8')
+          t = t.replace("versionCode 4", "versionCode 5")
+          t = t.replace("versionName '1.3'", "versionName '1.4'")
+          g.write_text(t, encoding='utf-8')
+          PY
+
+      - name: Verify v1.4 behavior
+        shell: bash
+        run: |
+          grep -F "function reveal(){if(finished||back)return;back=true;render()}" app/src/main/assets/reader_template.html
+          grep -F "if(!back)reveal();else play()" app/src/main/assets/reader_template.html
+          grep -F "轻点卡背播放读音" app/src/main/assets/reader_template.html
+          if grep -F "back=true;render();play()" app/src/main/assets/reader_template.html; then exit 1; fi
+
       - name: Build installable debug APK
         run: gradle --no-daemon :app:assembleDebug
 
@@ -44,15 +79,15 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/LAPIS-Reader-v1.3-debug.apk
-          sha256sum dist/LAPIS-Reader-v1.3-debug.apk > dist/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk dist/LAPIS-Reader-v1.4-debug.apk
+          sha256sum dist/LAPIS-Reader-v1.4-debug.apk > dist/SHA256SUMS.txt
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LAPIS-Reader-Android-APK-v1.3
+          name: LAPIS-Reader-Android-APK-v1.4
           path: |
-            dist/LAPIS-Reader-v1.3-debug.apk
+            dist/LAPIS-Reader-v1.4-debug.apk
             dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
